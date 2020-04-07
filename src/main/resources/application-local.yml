@@ -1,0 +1,18 @@
+#datasource
+spring:
+  datasource:
+      type: com.alibaba.druid.pool.DruidDataSource
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://127.0.0.1:3306/world?useUnicode=true&serverTimezone=UTC
+      username: root
+      password: root
+
+  #redis
+  redis:
+    host: 192.168.10.200
+    port: 6379
+    password: xbkj@123456
+#
+yimq:
+  service:
+    uri: http://172.31.1.112:7379
