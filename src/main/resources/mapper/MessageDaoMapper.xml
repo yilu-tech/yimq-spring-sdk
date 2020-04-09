@@ -3,9 +3,9 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.yimq.transaction.dao.MessageDao">
+<mapper namespace="com.common.transaction.dao.MessageDao">
 
-    <resultMap id="baseMap" type="com.yimq.transaction.entity.MessageEntity" >
+    <resultMap id="baseMap" type="com.common.transaction.entity.MessageEntity" >
         <id column="id" property="id" jdbcType="INTEGER" />
         <result column="topic" property="topic" jdbcType="VARCHAR" />
         <result column="type" property="type" jdbcType="INTEGER" />
@@ -18,7 +18,7 @@
         id,topic,type,status,created_at,updated_at
     </sql>
 
-    <update id="saveOrUpdateMessage"  useGeneratedKeys="true" keyProperty="id" parameterType="com.yimq.transaction.entity.MessageEntity">
+    <update id="saveOrUpdateMessage"  useGeneratedKeys="true" keyProperty="id" parameterType="com.common.transaction.entity.MessageEntity">
         insert into yimq_messages
         (<include refid="Insert_Column_List" />)
         values (

@@ -3,9 +3,9 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.yimq.transaction.dao.UserDao">
+<mapper namespace="com.common.transaction.dao.UserDao">
     
-    <resultMap id="baseMap" type="com.yimq.transaction.entity.UserEntity" >
+    <resultMap id="baseMap" type="com.common.transaction.entity.UserEntity" >
         <id column="id" property="id" jdbcType="INTEGER" />
         <result column="username" property="username" jdbcType="VARCHAR" />
         <result column="status" property="status" jdbcType="INTEGER" />
@@ -22,7 +22,7 @@
         id,username,status,created_at,updated_at
     </sql>
 
-    <update id="saveOrUpdateUser"  useGeneratedKeys="true" keyProperty="id" parameterType="com.yimq.transaction.entity.UserEntity">
+    <update id="saveOrUpdateUser"  useGeneratedKeys="true" keyProperty="id" parameterType="com.common.transaction.entity.UserEntity">
         insert into users
         (<include refid="Insert_Column_List" />)
         values (
