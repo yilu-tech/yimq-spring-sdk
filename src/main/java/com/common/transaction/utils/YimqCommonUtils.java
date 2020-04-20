@@ -1,5 +1,8 @@
 package com.common.transaction.utils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.common.transaction.config.TransactionClassConfig;
 import com.common.transaction.constants.YimqConstants;
 import com.common.transaction.constants.SubTaskStatusConstants;
 import com.common.transaction.dao.ProcessDao;
@@ -10,7 +13,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,6 +30,12 @@ public class YimqCommonUtils {
 
     @Resource
     private ProcessDao processDao;
+
+    @Resource
+    private YIMQManager yimqManager;
+
+    @Resource
+    private TransactionClassConfig transactionClassConfig;
 
     private static Map<String,Integer> transactionTypeCodeMap= new HashMap<>();
     private static Map<Integer,String> statusMap = new HashMap<>();
@@ -84,8 +95,55 @@ public class YimqCommonUtils {
         return result;
     }
 
-    public ProcessesEntity getProcessById(Integer processId) {
-        return processDao.selectProcessById(processId);
+    public Object runGetConfig(){
+        JSONObject config = new JSONObject();
+        config.put("actor_name", yimqManager.actorName);
+        List<Map<String,Object>> configList = new ArrayList<Map<String,Object>>();
+        Map<String,Object> configMap ;
+        for (Map.Entry entry:transactionClassConfig.getMaps().entrySet()) {
+            configMap = new HashMap<String,Object>();
+            configMap.put("processor",yimqManager.actorName+"."+entry.getKey());
+            configList.add(configMap);
+        }
+        config.put("processors",configList);
+        configList = new ArrayList<Map<String,Object>>();
+        if (null != transactionClassConfig.getListenersMap()) {
+            for (Map.Entry entry:transactionClassConfig.getListenersMap().entrySet()) {
+                configMap = new HashMap<String,Object>();
+                configMap.put(entry.getKey().toString(),entry.getValue());
+                configList.add(configMap);
+            }
+        }
+        config.put("broadcast_listeners",configList);
+
+        return config;
     }
+
+    /**
+     *  获取processes的tryResult  JSONObject 格式
+     * @param processId
+     * @return
+     */
+    public JSONObject getProcessTryResultById(Integer processId) {
+        ProcessesEntity processesEntity = processDao.selectProcessById(processId);
+        if (null == processesEntity){      //初步参数非空校验未通过
+            throw new RuntimeException("查询processes数据异常,processId:"+processId);
+        }
+        return  (JSONObject) JSON.toJSON(processesEntity.getTryResult());
+    }
+
+    /**
+     *  获取processes的data  JSONObject 格式
+     * @param processId
+     * @return
+     */
+    public JSONObject getProcessDataById(Integer processId) {
+        ProcessesEntity processesEntity = processDao.selectProcessById(processId);
+        if (null == processesEntity){      //初步参数非空校验未通过
+            throw new RuntimeException("查询processes数据异常,processId:"+processId);
+        }
+        return (JSONObject) JSON.toJSON(processesEntity.getData());
+    }
+
 
 }

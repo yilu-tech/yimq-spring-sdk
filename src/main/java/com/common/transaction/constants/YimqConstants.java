@@ -17,6 +17,8 @@ public class YimqConstants {
 
     public static final String MESSAGE_CHECK = "MESSAGE_CHECK";     //消息审核
 
+    public static final String GET_CONFIG = "GET_CONFIG";           //获取服务配置信息
+
     public static final String XA = "XA";           //XA事务类型
 
     public static final String TCC = "TCC";         //TCC事务类型

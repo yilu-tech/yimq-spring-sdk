@@ -3,7 +3,7 @@ package com.common.transaction.factory;
 import com.common.transaction.constants.YimqConstants;
 import com.common.transaction.entity.ProcessesEntity;
 import com.common.transaction.exception.MyTransactionException;
-import com.common.transaction.service.impl.*;
+import com.common.transaction.service.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -19,16 +19,16 @@ import javax.annotation.Resource;
 @Component
 public class TransactionFactory {
     @Resource
-    private XaTransactionServiceImpl xaTransactionServiceImpl;
+    private XaTransactionService xaTransactionService;
 
     @Resource
-    private TccTransactionServiceImpl tccTransactionServiceImpl;
+    private TccTransactionService tccTransactionService;
 
     @Resource
-    private EcTransactionServiceImpl ecTransactionServiceImpl;
+    private EcTransactionService ecTransactionService;
 
     @Resource
-    private BcstTransactionServiceImpl bcstTransactionServiceImpl;
+    private BcstTransactionService bcstTransactionService;
 
     public TransactionService createProcessService(ProcessesEntity processesEntity){
         TransactionService transactionService;
@@ -38,16 +38,16 @@ public class TransactionFactory {
         }
         switch (type) {
             case YimqConstants.XA:
-                transactionService = xaTransactionServiceImpl;
+                transactionService = xaTransactionService;
                 break;
             case YimqConstants.TCC:
-                transactionService = tccTransactionServiceImpl;
+                transactionService = tccTransactionService;
                 break;
             case YimqConstants.EC:
-                transactionService = ecTransactionServiceImpl;
+                transactionService = ecTransactionService;
                 break;
             case YimqConstants.BCST:
-                transactionService = bcstTransactionServiceImpl;
+                transactionService = bcstTransactionService;
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + type);

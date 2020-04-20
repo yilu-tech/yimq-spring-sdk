@@ -42,7 +42,7 @@ public class TccSubTask extends ProcessorSubTask {
         this.id = result.getInteger("id");
         this.prepareResult = result.getInteger("prepareResult");
         this.subTaskEntity = new SubTaskEntity();
-        subTaskEntity.setId(this.id);
+        subTaskEntity.setSubTaskId(this.id);
         subTaskEntity.setMessageId(this.message.id);
         subTaskEntity.setStatus(SubTaskStatusConstants.PREPARED);
         subTaskEntity.setType(this.type);

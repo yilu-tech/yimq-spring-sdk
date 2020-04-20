@@ -16,6 +16,7 @@ public class SubTaskEntity implements Serializable {
     private static final long serialVersionUID = 6111473372301104688L;
 
     private Integer id;
+    private Integer subTaskId;
     private Integer messageId;
     private Integer type;
     private Object data;
@@ -77,5 +78,13 @@ public class SubTaskEntity implements Serializable {
 
     public void setStatus(Integer status) {
         this.status = status;
+    }
+
+    public Integer getSubTaskId() {
+        return subTaskId;
+    }
+
+    public void setSubTaskId(Integer subTaskId) {
+        this.subTaskId = subTaskId;
     }
 }

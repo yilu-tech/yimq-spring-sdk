@@ -4,8 +4,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.transaction.message.TransactionYimqMessage;
 import com.common.transaction.subTask.EcSubTask;
 import com.common.transaction.subTask.TccSubTask;
-import com.common.transaction.utils.YimqCommonUtils;
 import com.common.transaction.utils.YIMQManager;
+import com.common.transaction.utils.YimqCommonUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -31,14 +31,13 @@ import java.util.Map;
 @Component
 public class YIMQClient {
 
-    private static final Logger log = Logger.getLogger(YIMQClient.class);
-
     @Resource
     private YIMQManager manager;
     @Value("${yimq.service.uri}")
     private String uri;
 
     private String serviceName;
+
     @Resource
     private YimqCommonUtils yimqCommonUtils;
 

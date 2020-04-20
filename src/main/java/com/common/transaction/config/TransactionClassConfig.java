@@ -21,6 +21,16 @@ public class TransactionClassConfig {
 
     private Map<String,String> maps;
 
+    private Map<String,String> listenersMap;
+
+    public Map<String, String> getListenersMap() {
+        return listenersMap;
+    }
+
+    public void setListenersMap(Map<String, String> listenersMap) {
+        this.listenersMap = listenersMap;
+    }
+
     public Map<String, String> getMaps() {
         return maps;
     }

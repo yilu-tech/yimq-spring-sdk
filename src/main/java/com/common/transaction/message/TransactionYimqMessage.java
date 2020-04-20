@@ -76,7 +76,7 @@ public class TransactionYimqMessage extends YimqMessage {
 
 
     //开启远程事务
-    private JSONObject createRemoteTransactionRecord() throws Exception {
+    public JSONObject createRemoteTransactionRecord() throws Exception {
         Map<String,Object> context = new HashMap<>();
         context.put("topic",this.getTopic());
         context.put("type", MessageServerTypeConstants.TRANSACTION);
@@ -85,7 +85,7 @@ public class TransactionYimqMessage extends YimqMessage {
     }
 
     //开启本地事务
-    private void createLocalTransactionRecord(JSONObject messageInfo) {
+    public void createLocalTransactionRecord(JSONObject messageInfo) {
         MessageEntity messageEntity = new MessageEntity();
         messageEntity.setId(messageInfo.getInteger("id"));
         messageEntity.setStatus(MessageStatusConstants.PENDING);
@@ -104,7 +104,7 @@ public class TransactionYimqMessage extends YimqMessage {
         ecSubTaskList.add(subTask);
     }
 
-    private TransactionYimqMessage prepare() {
+    public TransactionYimqMessage prepare() {
         Map<String,Object> context = new HashMap<>();
         List<Map<String,Object>> prepareSubTaskList = new ArrayList<Map<String,Object>>();
         context.put("message_id",this.id);
@@ -127,7 +127,7 @@ public class TransactionYimqMessage extends YimqMessage {
         return this;
     }
 
-    private void preparedSaveToJob(JSONObject result) {
+    public void preparedSaveToJob(JSONObject result) {
         for (int i =0 ;i < ecSubTaskList.size();i++) {
             EcSubTask ecSubTask = ecSubTaskList.get(i);
             ecSubTask.id = Integer.valueOf(((Map)((List) result.get("prepare_subtasks")).get(i)).get("id").toString());
@@ -152,7 +152,7 @@ public class TransactionYimqMessage extends YimqMessage {
     /**
      * 本地提交
      */
-    private void localCommit() {
+    public void localCommit() {
         this.messageEntity.setStatus(MessageStatusConstants.DONE);
         messageDao.saveOrUpdateMessage(this.messageEntity);
     }
@@ -160,7 +160,7 @@ public class TransactionYimqMessage extends YimqMessage {
     /**
      * 远程提交
      */
-    private void remoteCommit() {
+    public void remoteCommit() {
         Map<String,Object> context = new HashMap<>();
         context.put("message_id",this.id);
         JSONObject result = this.client.callServer("confirm",context);
@@ -181,7 +181,7 @@ public class TransactionYimqMessage extends YimqMessage {
     /**
      * 远程事务回滚
      */
-    private void remoteRollback() {
+    public void remoteRollback() {
         Map<String,Object> context = new HashMap<>();
         context.put("message_id",this.id);
         JSONObject result = this.client.callServer("cancel",context);

@@ -41,7 +41,7 @@ public class EcSubTask extends ProcessorSubTask {
 
     public void save() {
         subTaskEntity = new SubTaskEntity();
-        subTaskEntity.setId(id);
+        subTaskEntity.setSubTaskId(id);
         subTaskEntity.setMessageId(message.id);
         subTaskEntity.setStatus(SubTaskStatusConstants.PREPARED);
         subTaskEntity.setType(type);
