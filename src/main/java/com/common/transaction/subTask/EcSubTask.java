@@ -4,12 +4,15 @@ import com.common.transaction.client.YIMQClient;
 import com.common.transaction.constants.SubTaskStatusConstants;
 import com.common.transaction.constants.SubTaskTypeConstants;
 import com.common.transaction.dao.SubTaskDao;
+import com.common.transaction.entity.MessageEntity;
 import com.common.transaction.entity.SubTaskEntity;
-import com.common.transaction.message.TransactionYimqMessage;
-import org.springframework.stereotype.Component;
+import com.common.transaction.message.YimqTransactionMessage;
+import com.common.transaction.utils.YimqFrameDateUtils;
+import org.apache.log4j.Logger;
 
-import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,37 +22,39 @@ import java.util.Map;
  * Description :
  * Updated Date      by
  */
-@Component
 public class EcSubTask extends ProcessorSubTask {
+    private static final Logger log = Logger.getLogger(EcSubTask.class);
+
     private String serverType = "EC";
     public Integer type = SubTaskTypeConstants.EC;
 
-    @Resource
-    private SubTaskDao subTaskDao;
-
     public EcSubTask(){}
 
-    public EcSubTask(YIMQClient client, TransactionYimqMessage transactionMessage, String processor){
+    public EcSubTask(YIMQClient client, YimqTransactionMessage transactionMessage, String processor){
         super(client,transactionMessage,processor);
     }
 
     @Override
-    public Object join() {
-        this.message.addEcSubTask(this);
-        return this;
+    public List<SubTask> join(MessageEntity messageEntity) {
+        this.client = client;
+        List<SubTask> ecSubTaskList = new ArrayList<>();
+        ecSubTaskList.add(this);
+        return ecSubTaskList;
     }
 
-    public void save() {
+    public void save(SubTaskDao subTaskDao,int messageId,int subTaskId) {
         subTaskEntity = new SubTaskEntity();
-        subTaskEntity.setSubTaskId(id);
-        subTaskEntity.setMessageId(message.id);
+        subTaskEntity.setSubTaskId(subTaskId);
+        subTaskEntity.setMessageId(messageId);
         subTaskEntity.setStatus(SubTaskStatusConstants.PREPARED);
+        subTaskEntity.setCreateTime(YimqFrameDateUtils.currentFormatDate());
+        subTaskEntity.setUpdateTime(YimqFrameDateUtils.currentFormatDate());
         subTaskEntity.setType(type);
         subTaskDao.saveOrUpdateSubTask(subTaskEntity);
     }
 
     @Override
-    public Map<String,Object> getContext() {
+    public Map<String,Object> getContext(MessageEntity messageEntity) {
         Map<String, Object> context = new HashMap<>();
         context.put("type",this.serverType);
         context.put("processor",this.processor);

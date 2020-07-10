@@ -9,7 +9,10 @@ import com.common.transaction.dao.ProcessDao;
 import com.common.transaction.entity.ProcessesEntity;
 import com.common.transaction.http.YimqWrapResponse;
 import org.apache.log4j.Logger;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
@@ -32,35 +35,50 @@ public class TccTransactionService extends TransactionService {
     @Resource
     private ProcessDao processDao;
 
+    @Resource
+    DataSourceTransactionManager dataSourceTransactionManager;
+
+    @Resource
+    TransactionDefinition transactionDefinition;
+
+
     @Override
-    @Transactional(rollbackFor = Throwable.class)
-    public Object runTry(ProcessesEntity processesEntity) {
-        Object result ;
+    public Object runTry(ProcessesEntity processesEntity,String action) {
+        Object result = null;
         yimqCommonUtils.checkType(YimqConstants.TCC,processesEntity.getType());
         processesEntity.setStatus(SubTaskStatusConstants.PREPARING);
-        this.saveProcessRecord(SubTaskStatusConstants.PREPARING);
-        this.setAndLockProcessModel(processesEntity.getId());
+        this.insertProcessRecord(processesEntity);
+        TransactionStatus transactionStatus = dataSourceTransactionManager.getTransaction(transactionDefinition);;
         try {
-            result = this.prepare();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("数据执行中发生异常");
+            //开启事务
+            this.setAndLockProcessModel(processesEntity.getId());
+            result = this.prepare(processesEntity,action);
+            if (null == result) {
+                dataSourceTransactionManager.rollback(transactionStatus);
+                throw new RuntimeException("TCC异步事务TRY执行时发生异常正确，事务回滚");
+            }
+            JSONObject data = ((JSONObject) JSONObject.toJSON(result)).getJSONObject("data");
+            int code = ((JSONObject) JSONObject.toJSON(result)).getInteger("code");
+            if (code != 0) {
+                dataSourceTransactionManager.rollback(transactionStatus);
+                throw new RuntimeException("TCC异步事务TRY执行时数据返回状态不正确，事务回滚");
+            }
+            processesEntity.setTryResult(data);
+            processesEntity.setStatus(SubTaskStatusConstants.PREPARED);
+            this.updateProcess(processesEntity);
+            dataSourceTransactionManager.commit(transactionStatus);
+        }catch (Exception e) {
+            dataSourceTransactionManager.rollback(transactionStatus);
+            log.error("在TCC事务try时发生异常,messageId:"+processesEntity.getMessage_id());
         }
-        JSONObject data  = ((JSONObject) JSONObject.toJSON(result)).getJSONObject("data");
-        int code = ((JSONObject) JSONObject.toJSON(result)).getInteger("code");
-        if (code != 0) {
-            throw new RuntimeException("数据执行状态不正确，事务回滚");
-        }
-        this.getProcessesEntity().setTryResult(data);
-        this.saveProcessRecord(SubTaskStatusConstants.PREPARED);
         return result;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Object runConfirm(ProcessesEntity processes) {
-        Object result = new Object();
-        ProcessesEntity processesEntity = this.setAndLockProcessModel(processes.getId());
+    public Object runConfirm(ProcessesEntity processesEntity,String action) {
+        Object result = null;
+        processesEntity = this.setAndLockProcessModel(processesEntity.getId());
         //判断状态
         if (processesEntity.getStatus() == SubTaskStatusConstants.DONE) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -74,50 +92,61 @@ public class TccTransactionService extends TransactionService {
             return new YimqWrapResponse(YimqResponseCodeConstants.FAIL," tcc transaction handler happen exception. status is "+status);
         }
         try {
-            result = this.prepare();
+            result = this.prepare(processesEntity,action);
+            if (null == result) {
+                throw new RuntimeException("确认操作执行过程中发生异常，事务回滚");
+            }
+            int code = ((JSONObject) JSONObject.toJSON(result)).getInteger("code");
+            if (code != 0) {
+                throw new RuntimeException("确认操作返回状态不正确，事务回滚");
+            }
+            processesEntity.setStatus(SubTaskStatusConstants.DONE);
+            processDao.updateProcess(processesEntity);
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("在TCC事务确认时发生异常,messageId:"+processesEntity.getMessage_id());
-        }
-        int code = ((JSONObject) JSONObject.toJSON(result)).getInteger("code");
-        if (code != 0) {
-            throw new RuntimeException("确认操作返回状态不正确，事务回滚");
-        }
-        processesEntity.setStatus(SubTaskStatusConstants.DONE);
-        processDao.saveOrUpdateProcess(processesEntity);
-        return result;
-    }
-
-    @Override
-    @Transactional
-    public Object runCancel(ProcessesEntity processes) {
-         Object result = null;
-        try {
-            ProcessesEntity processesEntity = this.setAndLockProcessModel(processes.getId());
-            if (processesEntity.getStatus() == SubTaskStatusConstants.CANCELED) {
-                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                return new YimqWrapResponse(YimqResponseCodeConstants.SUCCESS, YimqResponseMessageConstants.MESSAGE_IS_CONSUMED);
-            }
-            //判断事务逻辑是否已经执行
-            if (processesEntity.getStatus() != SubTaskStatusConstants.PREPARED) {
-                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                String status = yimqCommonUtils.getStatusMap().get(processesEntity.getStatus());
-                log.error(" tcc transaction handler happen exception. status is "+status);
-                return new YimqWrapResponse(YimqResponseCodeConstants.FAIL," tcc transaction handler happen exception. status is "+status);
-            }
-            result = this.prepare();
-            processesEntity.setStatus(SubTaskStatusConstants.CANCELED);
-            processDao.saveOrUpdateProcess(processesEntity);
-        }catch (Exception e) {
-            e.printStackTrace();
+            log.error("在TCC事务confirm时发生异常,messageId:"+processesEntity.getMessage_id());
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }
         return result;
     }
 
     @Override
-    public Object prepare()  throws NoSuchMethodException, InvocationTargetException, IllegalAccessException{
-        return super.prepare();
+    @Transactional
+    public Object runCancel(ProcessesEntity processesEntity,String action) {
+        Object result = null;
+        try {
+            processesEntity = this.setAndLockProcessModel(processesEntity.getId());
+            if (null == processesEntity) {
+                log.info("process不存在,默认任务未创建，返回成功");
+                return new YimqWrapResponse(YimqResponseCodeConstants.SUCCESS,YimqResponseMessageConstants.SUCCESS);
+            }
+            if (processesEntity.getStatus() == SubTaskStatusConstants.CANCELED) {
+                return new YimqWrapResponse(YimqResponseCodeConstants.SUCCESS, YimqResponseMessageConstants.MESSAGE_IS_CONSUMED);
+            }
+            //判断事务逻辑是否已经执行
+            if (processesEntity.getStatus() != SubTaskStatusConstants.PREPARED) {
+                String status = yimqCommonUtils.getStatusMap().get(processesEntity.getStatus());
+                return new YimqWrapResponse(YimqResponseCodeConstants.FAIL," tcc transaction handler happen exception. status is "+status);
+            }
+            result = this.prepare(processesEntity,action);
+            if (null == result) {
+                throw new RuntimeException("取消操作执行过程中发生异常，事务回滚");
+            }
+            int code = ((JSONObject) JSONObject.toJSON(result)).getInteger("code");
+            if (code != 0) {
+                throw new RuntimeException("取消操作返回状态不正确，事务回滚");
+            }
+            processesEntity.setStatus(SubTaskStatusConstants.CANCELED);
+            processDao.updateProcess(processesEntity);
+        }catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            log.info("执行TCC事务的cancel时发生异常！messageId:"+processesEntity.getMessage_id());
+        }
+        return result;
+    }
+
+    @Override
+    public Object prepare(ProcessesEntity processesEntity,String action) throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        return super.prepare(processesEntity, action);
     }
 
 }

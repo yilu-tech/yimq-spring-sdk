@@ -31,26 +31,27 @@ public class XaTransactionService extends TransactionService {
     private XAResource xaResource;
 
     @Override
-    public Object runTry(ProcessesEntity processesEntity) {
+    public Object runTry(ProcessesEntity processesEntity,String action) {
         Object result = null;
         MysqlXid mysqlXid = yimqCommonUtils.getMysqlXid(processesEntity.getId().toString().getBytes());
         try {
             // 验证事务类型
             yimqCommonUtils.checkType(YimqConstants.XA,processesEntity.getType());
             //本地记录记录subTask
-            this.saveProcessRecord(SubTaskStatusConstants.PREPARING);
+            processesEntity.setStatus(SubTaskStatusConstants.PREPARING);
+            this.saveProcessRecord(processesEntity);
             //开启事务
             xaResource.start(mysqlXid,XAResource.TMNOFLAGS);
             //锁住process记录
             this.setAndLockProcessModel(processesEntity.getId());
             //执行业务操作
-            result = prepare();
+            result = prepare(processesEntity,action);
             //更新process状态
-            this.saveProcessRecord(SubTaskStatusConstants.DONE);
+            processesEntity.setStatus(SubTaskStatusConstants.DONE);
+            this.saveProcessRecord(processesEntity);
             //结束XA事务
             xaResource.end(mysqlXid,XAResource.TMSUCCESS);
             xaResource.prepare(mysqlXid);
-            System.out.println("Done");
         } catch (Exception e) {
             e.printStackTrace();
             try {
@@ -67,7 +68,7 @@ public class XaTransactionService extends TransactionService {
 
 
     @Override
-    public YimqWrapResponse runConfirm(ProcessesEntity processes) {
+    public YimqWrapResponse runConfirm(ProcessesEntity processes,String action) {
         MysqlXid mysqlXid = yimqCommonUtils.getMysqlXid(processes.getId().toString().getBytes());
         try {
             xaResource.commit(mysqlXid,true);
@@ -83,7 +84,7 @@ public class XaTransactionService extends TransactionService {
     }
 
     @Override
-    public YimqWrapResponse runCancel(ProcessesEntity processesEntity) {
+    public YimqWrapResponse runCancel(ProcessesEntity processesEntity,String action) {
         MysqlXid mysqlXid = yimqCommonUtils.getMysqlXid(processesEntity.getId().toString().getBytes());
         try {
             xaResource.rollback(mysqlXid);
@@ -96,8 +97,8 @@ public class XaTransactionService extends TransactionService {
     }
 
     @Override
-    public Object prepare() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        return super.prepare();
+    public Object prepare(ProcessesEntity processesEntity,String action) throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        return super.prepare(processesEntity,action);
     }
 
 

@@ -1,7 +1,7 @@
 package com.common.transaction.client;
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.transaction.message.TransactionYimqMessage;
+import com.common.transaction.message.YimqTransactionMessage;
 import com.common.transaction.subTask.EcSubTask;
 import com.common.transaction.subTask.TccSubTask;
 import com.common.transaction.utils.YIMQManager;
@@ -13,7 +13,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.ibatis.transaction.TransactionException;
-import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -38,9 +37,6 @@ public class YIMQClient {
 
     private String serviceName;
 
-    @Resource
-    private YimqCommonUtils yimqCommonUtils;
-
     public YIMQClient(){
 
     }
@@ -49,35 +45,29 @@ public class YIMQClient {
         this.serviceName = serviceName;
     }
 
-    public TransactionYimqMessage topic(String topic) {
-        return new TransactionYimqMessage(this,topic);
-    }
+   /* public YimqTransactionMessage topic(String topic) {
+        return new YimqTransactionMessage(this,topic);
+    }*/
 
     public TccSubTask tcc(String processor) throws Exception {
-        if (hasTransactionMessage()) {
-            throw new Exception(" Not begin a yimq transaction ");
-        }
         return new TccSubTask(this,this.getTransactionMessage(),processor);
     }
 
     public EcSubTask ec(String processor) throws Exception {
-        if (!hasTransactionMessage()) {
-            throw new Exception(" Not begin a yimq transaction ");
-        }
-        //return new EcSubTask(this,this.getTransactionMessage(),processor);
-        return null;
+        return new EcSubTask(this,this.getTransactionMessage(),processor);
     }
 
-    public void setTransactionMessage(TransactionYimqMessage transactionMessage) {
+    public void setTransactionMessage(YimqTransactionMessage transactionMessage) {
         this.manager.transactionMessage = transactionMessage;
     }
 
     public boolean hasTransactionMessage(){
-        if (null == this.manager.transactionMessage) return false;
+        if (null == this.manager.transactionMessage)
+            return false;
         return true;
     }
 
-    public TransactionYimqMessage getTransactionMessage(){
+    public YimqTransactionMessage getTransactionMessage(){
         return this.manager.transactionMessage;
     }
 
@@ -85,7 +75,7 @@ public class YIMQClient {
     public JSONObject callServer(String action, Map<String,Object> context) {
         context.put("actor",this.manager.actorName);
         String url = uri+ YimqCommonUtils.getActionMap().get(action);
-        JSONObject result = null;
+        JSONObject result;
         try {
             HttpClient httpClient = new DefaultHttpClient();
             HttpPost post = new HttpPost(url);

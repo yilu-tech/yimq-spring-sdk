@@ -19,4 +19,6 @@ public interface SubTaskDao {
 
     SubTaskEntity selectSubTaskById(Integer id);
 
+    int deleteSubTaskByMessageId(Integer messageId);
+
 }

@@ -7,43 +7,51 @@
 
     <resultMap id="baseMap" type="com.common.transaction.entity.MessageEntity" >
         <id column="id" property="id" jdbcType="INTEGER" />
+        <result column="message_id" property="message_id" jdbcType="INTEGER"/>
+        <result column="data" property="data" javaType="com.alibaba.fastjson.JSONObject" jdbcType="VARCHAR" typeHandler="com.common.transaction.utils.JSONHandler" />
+        <result column="reserved_at" property="reservedAt" jdbcType="TIMESTAMP" />
         <result column="topic" property="topic" jdbcType="VARCHAR" />
         <result column="type" property="type" jdbcType="INTEGER" />
+        <result column="attempts" property="attempts" jdbcType="INTEGER" />
         <result column="status" property="status" jdbcType="INTEGER" />
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" />
         <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP" />
     </resultMap>
 
     <sql id="Insert_Column_List">
-        id,topic,type,status,created_at,updated_at
+        message_id,data,reserved_at,topic,type,attempts,status,created_at,updated_at
     </sql>
 
     <update id="saveOrUpdateMessage"  useGeneratedKeys="true" keyProperty="id" parameterType="com.common.transaction.entity.MessageEntity">
         insert into yimq_messages
         (<include refid="Insert_Column_List" />)
         values (
-            #{id,jdbcType=INTEGER},#{topic,jdbcType=VARCHAR},#{type,jdbcType=INTEGER},#{status,jdbcType=INTEGER},
+            #{message_id,jdbcType=INTEGER},
+            #{data,jdbcType=VARCHAR,javaType=com.alibaba.fastjson.JSONObject,typeHandler=com.common.transaction.utils.JSONHandler},
+            #{reservedAt,jdbcType=TIMESTAMP},#{topic,jdbcType=VARCHAR},#{type,jdbcType=INTEGER},
+            #{attempts,jdbcType=INTEGER},#{status,jdbcType=INTEGER},
             #{createdAt,jdbcType=TIMESTAMP},#{updatedAt,jdbcType=TIMESTAMP}
         )
         on duplicate key update
-        status=values(status)
+        status=values(status),
+        attempts=values(attempts)
     </update>
 
 
     <select id="selectMessageByIdForUpdate" parameterType="java.lang.Integer" resultMap="baseMap" >
-        select id,topic,type,status,created_at,updated_at from yimq_messages
-        where id = #{messageId,jdbcType=INTEGER}
+        select id,message_id,data,topic,type,status,reserved_at,attempts,created_at,updated_at from yimq_messages
+        where message_id = #{messageId,jdbcType=INTEGER}
         for update
     </select>
     
     <select id="selectMessageById" parameterType="java.lang.Integer" resultMap="baseMap" >
-        select id,topic,type,status,created_at,updated_at
+        select id,message_id,data,topic,type,status,reserved_at,attempts,created_at,updated_at
         from yimq_messages
-        where id = #{messageId,jdbcType=INTEGER}
+        where message_id = #{messageId,jdbcType=INTEGER}
     </select>
 
-    <delete id="deleteMessageById" parameterType="java.lang.Integer" >
-        delete from yimq_messages where id = #{id,jdbcType=INTEGER}
+    <delete id="deleteMessageByMessageId" parameterType="java.lang.Integer" >
+        delete from yimq_messages where message_id = #{messageId,jdbcType=INTEGER}
     </delete>
 
 

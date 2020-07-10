@@ -13,10 +13,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProcessDao {
 
-    int saveOrUpdateProcess(ProcessesEntity processesEntity);
+    int insertProcess(ProcessesEntity processesEntity);
 
-    ProcessesEntity selectProcessByIdForUpdate(Integer id);
+    int updateProcess(ProcessesEntity processesEntity);
 
     ProcessesEntity selectProcessById(Integer id);
 
+    ProcessesEntity selectProcessByIdForUpdate(Integer id);
+
+    int deleteProcessById(Integer id);
 }

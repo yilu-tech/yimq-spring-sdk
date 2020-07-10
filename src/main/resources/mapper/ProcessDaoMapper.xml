@@ -26,31 +26,51 @@
         id,message_id,type,processor,data,try_result,status,created_at
     </sql>
 
-    <update id="saveOrUpdateProcess" parameterType="com.common.transaction.entity.ProcessesEntity">
+    <update id="insertProcess" parameterType="com.common.transaction.entity.ProcessesEntity">
         insert into yimq_processes
         (<include refid="Insert_Column_List" />)
-        values (
-        #{id,jdbcType=INTEGER},#{message_id,jdbcType=INTEGER},#{typeCode,jdbcType=INTEGER},#{processor,jdbcType=VARCHAR},
+        values (#{id,jdbcType=INTEGER},#{message_id,jdbcType=INTEGER},#{typeCode,jdbcType=INTEGER},#{processor,jdbcType=VARCHAR},
         #{data,jdbcType=VARCHAR,javaType=com.alibaba.fastjson.JSONObject,typeHandler=com.common.transaction.utils.JSONHandler},
         #{tryResult,jdbcType=VARCHAR,javaType=com.alibaba.fastjson.JSONObject,typeHandler=com.common.transaction.utils.JSONHandler},
         #{status,jdbcType=INTEGER},#{createTime,jdbcType=TIMESTAMP}
         )
-        on duplicate key update
-        status=values(status),
-        try_result=values(try_result)
     </update>
 
+    <update id="updateProcess"  parameterType="com.common.transaction.entity.ProcessesEntity">
+        update yimq_processes
+        <set>
+            <trim suffixOverrides=",">
+                <if test="null != updateTime">
+                    created_at = #{updateTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="null != status">
+                    status = #{status,jdbcType=INTEGER},
+                </if>
+                <if test="null != tryResult">
+                    try_result = #{tryResult,jdbcType=VARCHAR,javaType=com.alibaba.fastjson.JSONObject,typeHandler=com.common.transaction.utils.JSONHandler},
+                </if>
+                <if test="null != updateTime">
+                    updated_at = #{updateTime,jdbcType=TIMESTAMP},
+                </if>
+            </trim>
+        </set>
+        where id = #{id,jdbcType=INTEGER}
+    </update>
 
-    <select id="selectProcessByIdForUpdate" resultMap="resultMap" >
+    <select id="selectProcessById" resultMap="resultMap">
+        select <include refid="Base_Column_List" /> from yimq_processes
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+
+    <select id="selectProcessByIdForUpdate" resultMap="resultMap">
         select <include refid="Base_Column_List" /> from yimq_processes
         where id = #{id,jdbcType=INTEGER}
         for update
     </select>
-
-    <select id="selectProcessById" resultMap="resultMap" >
-        select <include refid="Base_Column_List" /> from yimq_processes
-        where id = #{id,jdbcType=INTEGER}
-    </select>
+    
+    <delete id="deleteProcessById" parameterType="java.lang.Integer">
+        delete from yimq_processes where id = #{id,jdbcType=INTEGER}
+    </delete>
 
 
 </mapper>

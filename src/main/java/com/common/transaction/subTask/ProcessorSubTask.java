@@ -1,7 +1,9 @@
 package com.common.transaction.subTask;
 
 import com.common.transaction.client.YIMQClient;
-import com.common.transaction.message.TransactionYimqMessage;
+import com.common.transaction.message.YimqTransactionMessage;
+
+import javax.annotation.Resource;
 
 /**
  * create by gaotiedun ON 2020/3/31 17:27
@@ -10,13 +12,14 @@ import com.common.transaction.message.TransactionYimqMessage;
  * Description :
  * Updated Date      by
  */
+@Resource
 public abstract class ProcessorSubTask extends SubTask {
 
     protected String processor;
 
     public ProcessorSubTask(){}
 
-    public ProcessorSubTask(YIMQClient client, TransactionYimqMessage message, String processor) {
+    public ProcessorSubTask(YIMQClient client, YimqTransactionMessage message, String processor) {
         super(client, message);
         this.processor = processor;
     }

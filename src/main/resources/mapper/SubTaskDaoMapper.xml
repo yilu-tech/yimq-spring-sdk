@@ -31,7 +31,7 @@
         values (
             #{subTaskId,jdbcType=INTEGER},#{messageId,jdbcType=INTEGER},#{type,jdbcType=INTEGER},
             #{data,jdbcType=VARCHAR,javaType=java.lang.Object,typeHandler=com.common.transaction.utils.JSONHandler},
-            #{status,jdbcType=INTEGER},#{createTime,jdbcType=TIMESTAMP}
+            #{status,jdbcType=INTEGER},#{createTime,jdbcType=TIMESTAMP},#{updateTime,jdbcType=TIMESTAMP}
         )
         on duplicate key update
         status=values(status)
@@ -49,5 +49,8 @@
         where id = #{id,jdbcType=INTEGER}
     </select>
 
+    <delete id="deleteSubTaskByMessageId"  parameterType="java.lang.Integer">
+        delete from yimq_subtasks where message_id = #{messageId,jdbcType=INTEGER}
+    </delete>
 
 </mapper>

@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.common.transaction</groupId>
     <artifactId>transaction</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
     <name>transaction</name>
     <description>Demo project for Spring Boot</description>
 
@@ -104,11 +104,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
-        </dependency>
+        </dependency>-->
     </dependencies>
 
     <build>

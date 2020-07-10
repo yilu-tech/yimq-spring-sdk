@@ -15,4 +15,12 @@ public class MessageStatusConstants {
 
     public static final int CANCELED = -20;
 
+    public static final String BEGIN = "BEGIN";
+
+    public static final String PREPARE = "PREPARE";
+
+    public static final String COMMIT = "COMMIT";
+
+    public static final String ROLLBACK = "ROLLBACK";
+
 }

@@ -23,7 +23,10 @@ public class YimqWrapResponse implements Serializable {
     private int code;                               //返回状态码
     private String message;                         //提示信息
     private Object data = new HashMap<>() ;         //返回数据结果集
-    private int  prompt = 0;                        //是否在前端展示
+    private int  prompt = 0;                        //
+    private String status;
+
+
 
     public YimqWrapResponse() {
     }
@@ -37,6 +40,14 @@ public class YimqWrapResponse implements Serializable {
             errorMap.put(error.getField(),new String[]{error.getDefaultMessage()});
         }
         this.data = errorMap;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public int getCode() {
@@ -81,6 +92,14 @@ public class YimqWrapResponse implements Serializable {
         this.message = message;
         this.data = data;
     }
+
+    public YimqWrapResponse(int code, String message, Object data,String status) {
+        this.code = code;
+        this.message = message;
+        this.data = data;
+        this.status = status;
+    }
+
 
     public YimqWrapResponse(int code, String message, Object data, int prompt) {
         this.code = code;

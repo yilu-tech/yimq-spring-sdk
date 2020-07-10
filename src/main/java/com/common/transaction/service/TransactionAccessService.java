@@ -6,6 +6,7 @@ import com.common.transaction.entity.ProcessesEntity;
 import com.common.transaction.factory.TransactionFactory;
 import com.common.transaction.utils.YimqCommonUtils;
 import com.common.transaction.utils.YimqRequestUtils;
+import org.apache.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -22,6 +23,7 @@ import java.util.Map;
  */
 @Service
 public class TransactionAccessService {
+    private static final Logger log = Logger.getLogger(TransactionAccessService.class);
 
     @Resource
     private TransactionFactory transactionFactory;
@@ -36,38 +38,54 @@ public class TransactionAccessService {
         if (action.equals(YimqConstants.GET_CONFIG)) {
             return yimqCommonUtils.runGetConfig();
         }
-        for (Map.Entry entry:paramsMap.entrySet()) {
-            System.out.println(entry.getKey()+":"+entry.getValue());
-        }
-        ProcessesEntity processesEntity = ((JSONObject) paramsMap.get("context")).toJavaObject(ProcessesEntity.class);
-        processesEntity.setTypeCode(YimqCommonUtils.getTransactionTypeCode(processesEntity.getType()));
-        TransactionService transactionService = transactionFactory.createProcessService(processesEntity);
-        transactionService.setAction(action);
+        log.info(" Ec consumer context :"+paramsMap.get("context"));
+        ProcessesEntity processesEntity = transferProcesses((JSONObject) paramsMap.get("context"),action);
+        TransactionService transactionService = transactionFactory.createProcessService(processesEntity,action);
         try {
             switch (action){
                 case YimqConstants.TRY:
-                    result = transactionService.runTry(processesEntity);
+                    result = transactionService.runTry(processesEntity,action);
                     break;
                 case YimqConstants.CONFIRM:
-                    result = transactionService.runConfirm(processesEntity);
+                    result = transactionService.runConfirm(processesEntity,action);
                     break;
                 case YimqConstants.CANCEL:
-                    result = transactionService.runCancel(processesEntity);
+                    result = transactionService.runCancel(processesEntity,action);
                     break;
                 case YimqConstants.MESSAGE_CHECK:
                     result = transactionService.runMessageCheck(processesEntity);
                     break;
+                case YimqConstants.ACTOR_CLEAR:
+                    result = transactionService.runActorClear(processesEntity);
+                    break;
                 default:
                     throw new RuntimeException(" Action "+action+" not exist .");
             }
-            if (((JSONObject) JSONObject.toJSON(result)).getInteger("code") != 0 ){
+            if (null == result || ((JSONObject) JSONObject.toJSON(result)).getInteger("code") != 0 ){
                 response.setStatus(400);
             }
         }catch (Exception e){
+            e.printStackTrace();
+            log.error("执行异步事务接收方业务时发生异常,异常信息:"+e);
+            log.error("----------message_id:"+processesEntity.getMessage_id()+",请求的process:"+processesEntity.getProcessor()+"请求参数："+processesEntity.getData());
             response.setStatus(400);
         }
-        return result;
+    return result;
     }
 
+    public ProcessesEntity transferProcesses(JSONObject jsonObject,String action) {
+        ProcessesEntity processesEntity = new ProcessesEntity();
+        processesEntity.setId(jsonObject.getInteger("id"));
+        processesEntity.setData(jsonObject.get("data"));
+        processesEntity.setProcessor(jsonObject.getString("processor"));
+        processesEntity.setType(jsonObject.getString("type"));
+        processesEntity.setMessage_id(jsonObject.getInteger("message_id"));
+        processesEntity.setMessageIds(jsonObject.getJSONArray("message_ids"));
+        processesEntity.setProcessIds(jsonObject.getJSONArray("process_ids"));
+        if (!action.equals(YimqConstants.MESSAGE_CHECK) && !action.equals(YimqConstants.ACTOR_CLEAR)) {
+            processesEntity.setTypeCode(YimqCommonUtils.getTransactionTypeCode(processesEntity.getType()));
+        }
+         return processesEntity;
+    }
 
 }

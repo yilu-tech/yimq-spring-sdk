@@ -1,5 +1,6 @@
 package com.common.transaction.entity;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import java.io.Serializable;
@@ -20,11 +21,13 @@ public class ProcessesEntity implements Serializable {
     private Integer typeCode;
     private String type;
     private String processor;
-    private JSONObject data;
+    private Object data;
     private JSONObject tryResult;
     private Integer status;
     private String createTime;
     private String updateTime;
+    private JSONArray messageIds;
+    private JSONArray processIds;
 
     public Integer getId() {
         return id;
@@ -91,11 +94,11 @@ public class ProcessesEntity implements Serializable {
         this.updateTime = updateTime;
     }
 
-    public JSONObject getData() {
+    public Object getData() {
         return data;
     }
 
-    public void setData(JSONObject data) {
+    public void setData(Object data) {
         this.data = data;
     }
 
@@ -105,5 +108,21 @@ public class ProcessesEntity implements Serializable {
 
     public void setTryResult(JSONObject tryResult) {
         this.tryResult = tryResult;
+    }
+
+    public JSONArray getMessageIds() {
+        return messageIds;
+    }
+
+    public void setMessageIds(JSONArray messageIds) {
+        this.messageIds = messageIds;
+    }
+
+    public JSONArray getProcessIds() {
+        return processIds;
+    }
+
+    public void setProcessIds(JSONArray processIds) {
+        this.processIds = processIds;
     }
 }

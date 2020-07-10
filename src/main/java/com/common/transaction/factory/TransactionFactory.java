@@ -2,10 +2,8 @@ package com.common.transaction.factory;
 
 import com.common.transaction.constants.YimqConstants;
 import com.common.transaction.entity.ProcessesEntity;
-import com.common.transaction.exception.MyTransactionException;
 import com.common.transaction.service.*;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 
@@ -30,30 +28,26 @@ public class TransactionFactory {
     @Resource
     private BcstTransactionService bcstTransactionService;
 
-    public TransactionService createProcessService(ProcessesEntity processesEntity){
-        TransactionService transactionService;
+    public TransactionService createProcessService(ProcessesEntity processesEntity, String action){
+        TransactionService transactionService = null;
         String type = processesEntity.getType();
-        if (StringUtils.isEmpty(type) ) {
-            throw new MyTransactionException(" this context type is null");
+        if (action .equals(YimqConstants.ACTOR_CLEAR) || action.equals(YimqConstants.MESSAGE_CHECK)) {
+            transactionService = bcstTransactionService;
+        }else{
+            switch (type) {
+                case YimqConstants.XA:
+                    transactionService = xaTransactionService;
+                    break;
+                case YimqConstants.TCC:
+                    transactionService = tccTransactionService;
+                    break;
+                case YimqConstants.EC:
+                    transactionService = ecTransactionService;
+                    break;
+                case YimqConstants.BCST:
+                    transactionService = bcstTransactionService;
+            }
         }
-        switch (type) {
-            case YimqConstants.XA:
-                transactionService = xaTransactionService;
-                break;
-            case YimqConstants.TCC:
-                transactionService = tccTransactionService;
-                break;
-            case YimqConstants.EC:
-                transactionService = ecTransactionService;
-                break;
-            case YimqConstants.BCST:
-                transactionService = bcstTransactionService;
-                break;
-            default:
-                throw new IllegalStateException("Unexpected value: " + type);
-        }
-        transactionService.setProcessesEntity(processesEntity);
-        transactionService.setData(processesEntity.getData());
         return transactionService;
     }
 

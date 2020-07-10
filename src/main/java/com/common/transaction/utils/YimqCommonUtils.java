@@ -9,6 +9,7 @@ import com.common.transaction.dao.ProcessDao;
 import com.common.transaction.entity.ProcessesEntity;
 import com.common.transaction.exception.MyTransactionException;
 import com.mysql.cj.jdbc.MysqlXid;
+import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -27,6 +28,8 @@ import java.util.Map;
  */
 @Component
 public class YimqCommonUtils {
+
+    private static final Logger log = Logger.getLogger(YimqCommonUtils.class);
 
     @Resource
     private ProcessDao processDao;

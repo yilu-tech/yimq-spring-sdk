@@ -1,9 +1,12 @@
 package com.common.transaction.subTask;
 
 import com.common.transaction.client.YIMQClient;
+import com.common.transaction.entity.MessageEntity;
 import com.common.transaction.entity.SubTaskEntity;
-import com.common.transaction.message.TransactionYimqMessage;
+import com.common.transaction.message.YimqTransactionMessage;
 
+import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,36 +16,36 @@ import java.util.Map;
  * Description :
  * Updated Date      by
  */
+@Resource
 public abstract class SubTask {
 
     public String serverType;
     public String type;
-    public Integer id;
     protected YIMQClient client;
-    protected TransactionYimqMessage message;
-    protected String data;
+    protected YimqTransactionMessage message;
+    protected Object data;
     public SubTaskEntity subTaskEntity;
 
     public SubTask() {
     }
 
-    public SubTask(YIMQClient client, TransactionYimqMessage message) {
+    public SubTask(YIMQClient client, YimqTransactionMessage message) {
         this.client = client;
         this.message = message;
     }
 
-    public SubTask data(String data) {
+    public SubTask data(Object data) {
         this.data = data;
         return this;
     }
 
-    public String getData() {
-        return this.data;
+    public Object getData() {
+        return data;
     }
 
-    public abstract Object join();
+    public abstract List<SubTask> join(MessageEntity messageEntity);
 
-    public abstract Map<String,Object> getContext();
+    public abstract Map<String,Object> getContext(MessageEntity messageEntity);
 
 
 }

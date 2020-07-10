@@ -1,9 +1,9 @@
 package com.common.transaction.entity;
 
 import com.common.transaction.client.YIMQClient;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import javax.annotation.Resource;
 import java.io.Serializable;
 
 /**
@@ -15,13 +15,50 @@ import java.io.Serializable;
  */
 public class YimqMessage implements Serializable {
     private static final long serialVersionUID = -3048610133154675667L;
-    @Resource
     protected YIMQClient client;
     public String topic;
-    public MessageEntity messageEntity;
-    public Integer id;
+    //public MessageEntity messageEntity;
+    //public Integer id;
     public Integer delay = 2000;
     public String data;
+
+    public YIMQClient getClient() {
+        return client;
+    }
+
+    public void setClient(YIMQClient client) {
+        this.client = client;
+    }
+
+    public YimqMessage setTopic(String topic) {
+        this.topic = topic;
+        return this;
+    }
+
+   /* public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }*/
+
+    public Integer getDelay() {
+        return delay;
+    }
+
+    public void setDelay(Integer delay) {
+        this.delay = delay;
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    public YimqMessage setData(String data) {
+        this.data = data;
+        return this;
+    }
 
     public YimqMessage(){}
 

@@ -19,4 +19,6 @@ public interface MessageDao {
 
     int saveOrUpdateMessage(MessageEntity messageEntity);
 
+    int deleteMessageByMessageId(Integer messageId);
+
 }

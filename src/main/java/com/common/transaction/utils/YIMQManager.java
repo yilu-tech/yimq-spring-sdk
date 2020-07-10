@@ -1,7 +1,7 @@
 package com.common.transaction.utils;
 
 import com.common.transaction.client.YIMQClient;
-import com.common.transaction.message.TransactionYimqMessage;
+import com.common.transaction.message.YimqTransactionMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +17,7 @@ import java.util.Map;
 @Component
 public class YIMQManager {
     public Map<String, YIMQClient> yimqClientMap;
-    public TransactionYimqMessage transactionMessage = null;
+    public YimqTransactionMessage transactionMessage = null;
     @Value("${actor.name}")
     public String actorName;
 
