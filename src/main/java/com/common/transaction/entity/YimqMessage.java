@@ -15,20 +15,12 @@ import java.io.Serializable;
  */
 public class YimqMessage implements Serializable {
     private static final long serialVersionUID = -3048610133154675667L;
-    protected YIMQClient client;
+    //protected YIMQClient client;
     public String topic;
     //public MessageEntity messageEntity;
     //public Integer id;
     public Integer delay = 2000;
     public String data;
-
-    public YIMQClient getClient() {
-        return client;
-    }
-
-    public void setClient(YIMQClient client) {
-        this.client = client;
-    }
 
     public YimqMessage setTopic(String topic) {
         this.topic = topic;
@@ -63,7 +55,6 @@ public class YimqMessage implements Serializable {
     public YimqMessage(){}
 
     public YimqMessage(YIMQClient client, String topic){
-        this.client = client;
         this.topic = topic;
     }
 
