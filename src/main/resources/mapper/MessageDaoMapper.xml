@@ -6,8 +6,8 @@
 <mapper namespace="com.common.transaction.dao.MessageDao">
 
     <resultMap id="baseMap" type="com.common.transaction.entity.MessageEntity" >
-        <id column="id" property="id" jdbcType="INTEGER" />
-        <result column="message_id" property="message_id" jdbcType="INTEGER"/>
+        <id column="id" property="id" jdbcType="BIGINT" />
+        <result column="message_id" property="message_id" jdbcType="BIGINT"/>
         <result column="data" property="data" javaType="com.alibaba.fastjson.JSONObject" jdbcType="VARCHAR" typeHandler="com.common.transaction.utils.JSONHandler" />
         <result column="reserved_at" property="reservedAt" jdbcType="TIMESTAMP" />
         <result column="topic" property="topic" jdbcType="VARCHAR" />
@@ -26,7 +26,7 @@
         insert into yimq_messages
         (<include refid="Insert_Column_List" />)
         values (
-            #{message_id,jdbcType=INTEGER},
+            #{message_id,jdbcType=BIGINT},
             #{data,jdbcType=VARCHAR,javaType=com.alibaba.fastjson.JSONObject,typeHandler=com.common.transaction.utils.JSONHandler},
             #{reservedAt,jdbcType=TIMESTAMP},#{topic,jdbcType=VARCHAR},#{type,jdbcType=INTEGER},
             #{attempts,jdbcType=INTEGER},#{status,jdbcType=INTEGER},
@@ -38,21 +38,40 @@
     </update>
 
 
-    <select id="selectMessageByIdForUpdate" parameterType="java.lang.Integer" resultMap="baseMap" >
+    <select id="selectMessageByIdForUpdate" parameterType="java.math.BigInteger" resultMap="baseMap" >
         select id,message_id,data,topic,type,status,reserved_at,attempts,created_at,updated_at from yimq_messages
-        where message_id = #{messageId,jdbcType=INTEGER}
+        where message_id = #{messageId,jdbcType=BIGINT}
         for update
     </select>
     
-    <select id="selectMessageById" parameterType="java.lang.Integer" resultMap="baseMap" >
+    <select id="selectMessageById" parameterType="java.math.BigInteger" resultMap="baseMap" >
         select id,message_id,data,topic,type,status,reserved_at,attempts,created_at,updated_at
         from yimq_messages
-        where message_id = #{messageId,jdbcType=INTEGER}
+        where message_id = #{messageId,jdbcType=BIGINT}
     </select>
 
-    <delete id="deleteMessageByMessageId" parameterType="java.lang.Integer" >
-        delete from yimq_messages where message_id = #{messageId,jdbcType=INTEGER}
+    <delete id="deleteMessageByMessageId" parameterType="java.math.BigInteger" >
+        delete from yimq_messages where message_id = #{messageId,jdbcType=BIGINT}
     </delete>
 
+    <select id="selectMessageListByIdForUpdate" resultType="com.common.transaction.entity.MessageEntity">
+        select message_id from yimq_messages
+        where message_id in
+        <foreach collection="messageIdList" item="messageId" index="index" open="(" close=")" separator=",">
+            #{messageId,jdbcType=BIGINT}
+        </foreach>
+        <if test="null != status" >
+            and status = #{status,jdbcType=INTEGER}
+        </if>
+        for update skip locked
+    </select>
+    
+    <delete id="deleteMessage" parameterType="java.util.List">
+        delete from yimq_messages
+        where message_id in
+        <foreach collection="messageIdList" item="messageId" index="index" open="(" close=")" separator=",">
+            #{messageId,jdbcType=BIGINT}
+        </foreach>
+    </delete>
 
 </mapper>

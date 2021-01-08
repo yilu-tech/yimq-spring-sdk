@@ -1,6 +1,6 @@
 package com.common.transaction.service;
 
-import com.common.transaction.constants.SubTaskStatusConstants;
+import com.common.transaction.constants.ProcessesStatusConstants;
 import com.common.transaction.constants.YimqConstants;
 import com.common.transaction.constants.YimqResponseCodeConstants;
 import com.common.transaction.constants.YimqResponseMessageConstants;
@@ -38,7 +38,7 @@ public class XaTransactionService extends TransactionService {
             // 验证事务类型
             yimqCommonUtils.checkType(YimqConstants.XA,processesEntity.getType());
             //本地记录记录subTask
-            processesEntity.setStatus(SubTaskStatusConstants.PREPARING);
+            processesEntity.setStatus(ProcessesStatusConstants.PREPARING);
             this.saveProcessRecord(processesEntity);
             //开启事务
             xaResource.start(mysqlXid,XAResource.TMNOFLAGS);
@@ -47,7 +47,7 @@ public class XaTransactionService extends TransactionService {
             //执行业务操作
             result = prepare(processesEntity,action);
             //更新process状态
-            processesEntity.setStatus(SubTaskStatusConstants.DONE);
+            processesEntity.setStatus(ProcessesStatusConstants.DONE);
             this.saveProcessRecord(processesEntity);
             //结束XA事务
             xaResource.end(mysqlXid,XAResource.TMSUCCESS);
@@ -75,7 +75,7 @@ public class XaTransactionService extends TransactionService {
         } catch (XAException e) {
             e.printStackTrace();
             ProcessesEntity processesEntity = this.setAndLockProcessModel(processes.getId());
-            if(processesEntity.getStatus()== SubTaskStatusConstants.DONE){
+            if(processesEntity.getStatus()== ProcessesStatusConstants.DONE){
                 return new YimqWrapResponse(YimqResponseCodeConstants.SUCCESS, YimqResponseMessageConstants.SUCCESS);
             }
             return new YimqWrapResponse(YimqResponseCodeConstants.FAIL, YimqResponseMessageConstants.EXCEPTION);

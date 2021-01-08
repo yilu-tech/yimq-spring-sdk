@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 
 /**
  * create by gaotiedun ON 2020/3/24 17:59
@@ -16,8 +17,8 @@ public class ProcessesEntity implements Serializable {
 
     private static final long serialVersionUID = 6111473372301104688L;
 
-    private Integer id;
-    private Integer message_id;
+    private BigInteger id;
+    private BigInteger message_id;
     private Integer typeCode;
     private String type;
     private String processor;
@@ -26,22 +27,23 @@ public class ProcessesEntity implements Serializable {
     private Integer status;
     private String createTime;
     private String updateTime;
-    private JSONArray messageIds;
+    private JSONArray doneMessageIds;
+    private JSONArray cancelMessageIds;
     private JSONArray processIds;
 
-    public Integer getId() {
+    public BigInteger getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(BigInteger id) {
         this.id = id;
     }
 
-    public Integer getMessage_id() {
+    public BigInteger getMessage_id() {
         return message_id;
     }
 
-    public void setMessage_id(Integer message_id) {
+    public void setMessage_id(BigInteger message_id) {
         this.message_id = message_id;
     }
 
@@ -110,12 +112,20 @@ public class ProcessesEntity implements Serializable {
         this.tryResult = tryResult;
     }
 
-    public JSONArray getMessageIds() {
-        return messageIds;
+    public JSONArray getDoneMessageIds() {
+        return doneMessageIds;
     }
 
-    public void setMessageIds(JSONArray messageIds) {
-        this.messageIds = messageIds;
+    public void setDoneMessageIds(JSONArray doneMessageIds) {
+        this.doneMessageIds = doneMessageIds;
+    }
+
+    public JSONArray getCancelMessageIds() {
+        return cancelMessageIds;
+    }
+
+    public void setCancelMessageIds(JSONArray cancelMessageIds) {
+        this.cancelMessageIds = cancelMessageIds;
     }
 
     public JSONArray getProcessIds() {

@@ -1,9 +1,7 @@
 package com.common.transaction.entity;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.math.BigInteger;
 
 /**
  * create by gaotiedun ON 2020/4/1 15:10
@@ -15,9 +13,9 @@ import java.util.Map;
 public class SubTaskEntity implements Serializable {
     private static final long serialVersionUID = 6111473372301104688L;
 
-    private Integer id;
-    private Integer subTaskId;
-    private Integer messageId;
+    private BigInteger id;
+    private BigInteger subTaskId;
+    private BigInteger messageId;
     private Integer type;
     private Object data;
     private Integer status;
@@ -40,19 +38,23 @@ public class SubTaskEntity implements Serializable {
         this.updateTime = updateTime;
     }
 
-    public Integer getId() {
+    public BigInteger getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(BigInteger id) {
         this.id = id;
     }
 
-    public Integer getMessageId() {
+    public void setSubTaskId(BigInteger subTaskId) {
+        this.subTaskId = subTaskId;
+    }
+
+    public BigInteger getMessageId() {
         return messageId;
     }
 
-    public void setMessageId(Integer messageId) {
+    public void setMessageId(BigInteger messageId) {
         this.messageId = messageId;
     }
 
@@ -80,11 +82,4 @@ public class SubTaskEntity implements Serializable {
         this.status = status;
     }
 
-    public Integer getSubTaskId() {
-        return subTaskId;
-    }
-
-    public void setSubTaskId(Integer subTaskId) {
-        this.subTaskId = subTaskId;
-    }
 }

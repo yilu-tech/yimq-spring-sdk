@@ -1,7 +1,11 @@
 package com.common.transaction.dao;
 
 import com.common.transaction.entity.ProcessesEntity;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
+
+import java.math.BigInteger;
+import java.util.List;
 
 /**
  * create by gaotiedun ON 2020/4/8 10:01
@@ -13,13 +17,17 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProcessDao {
 
+    ProcessesEntity selectProcessByIdForUpdateSkipLocked(BigInteger id);
+
     int insertProcess(ProcessesEntity processesEntity);
 
     int updateProcess(ProcessesEntity processesEntity);
 
-    ProcessesEntity selectProcessById(Integer id);
+    ProcessesEntity selectProcessById(BigInteger id);
 
-    ProcessesEntity selectProcessByIdForUpdate(Integer id);
+    ProcessesEntity selectProcessByIdForUpdate(BigInteger id);
 
-    int deleteProcessById(Integer id);
+    List<ProcessesEntity> selectProcessForUpdate(List<BigInteger> processIdList, List<Integer> processStatusList);
+
+    int clearProcedure(String type, @Param("canClearProcessId") String canClearProcessId);
 }

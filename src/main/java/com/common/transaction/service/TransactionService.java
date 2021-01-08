@@ -1,5 +1,6 @@
 package com.common.transaction.service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.transaction.config.TransactionClassConfig;
@@ -16,13 +17,16 @@ import com.common.transaction.utils.YimqCommonUtils;
 import com.common.transaction.utils.YimqFrameDateUtils;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.annotation.Resource;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.List;
+import java.math.BigInteger;
+import java.util.*;
 
 /**
  * create by gaotiedun ON 2020/3/24 17:57
@@ -36,19 +40,13 @@ public abstract class TransactionService {
 
     private static final Logger log = Logger.getLogger(TransactionService.class);
 
-    //private String action;
+    private BigInteger processId;
 
-   /* public void setAction(String action) {
-        this.action = action;
-    }*/
-
-    private Integer processId;
-
-    public Integer getProcessId() {
+    public BigInteger getProcessId() {
         return processId;
     }
 
-    public void setProcessId(Integer processId) {
+    public void setProcessId(BigInteger processId) {
         this.processId = processId;
     }
 
@@ -85,7 +83,7 @@ public abstract class TransactionService {
         processDao.insertProcess(processesEntity);
     }
 
-    public ProcessesEntity setAndLockProcessModel(Integer processId){
+    public ProcessesEntity setAndLockProcessModel(BigInteger processId){
         return processDao.selectProcessByIdForUpdate(processId);
     }
 
@@ -97,7 +95,7 @@ public abstract class TransactionService {
 
     @Transactional
     public Object runMessageCheck(ProcessesEntity processesEntity) {
-        int messageId = processesEntity.getMessage_id();
+        BigInteger messageId = processesEntity.getMessage_id();
         MessageEntity messageEntity = messageDao.selectMessageByIdForUpdate(messageId);
         YimqWrapResponse yimqWrapResponse = new YimqWrapResponse(YimqResponseCodeConstants.FAIL, YimqResponseMessageConstants.EXCEPTION);;
         if (null == messageEntity) {
@@ -124,62 +122,73 @@ public abstract class TransactionService {
      *  message清理接口
      * @return
      */
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class,isolation = Isolation.READ_UNCOMMITTED)
     public Object runActorClear(ProcessesEntity processesEntity) {
+        Map<String,Object> resultMap = new HashMap<>();
         try {
-            if (null != processesEntity.getMessageIds()) {
-                List<Integer> messageIdList = JSONObject.parseArray(processesEntity.getMessageIds().toJSONString(), Integer.class);
-                if (null != messageIdList && 0 != messageIdList.size()) {
-                    clearMessage(messageIdList);
-                }
-            }
-            if (null != processesEntity.getProcessIds()) {
-                List<Integer> processIdList = JSONObject.parseArray(processesEntity.getProcessIds().toJSONString(), Integer.class);
-                if (null != processIdList && 0 != processIdList.size()) {
-                    clearProcess(processIdList);
-                }
-            }
+            List<BigInteger> doneMessageIdList = JSONObject.parseArray(processesEntity.getDoneMessageIds().toJSONString(), BigInteger.class);
+            List<BigInteger> cancelMessageIdList = JSONObject.parseArray(processesEntity.getCancelMessageIds().toJSONString(), BigInteger.class);
+            List<BigInteger> failedDoneMessageIdList =  clearMessage(doneMessageIdList,MessageStatusConstants.DONE);
+            List<BigInteger> failedCancelMessageIdList = clearMessage(cancelMessageIdList,MessageStatusConstants.CANCELED);
+            List<BigInteger> processIdList = JSONObject.parseArray(processesEntity.getProcessIds().toJSONString(), BigInteger.class);
+            List<BigInteger> failedProcessIdList = clearProcess(processIdList);
+
+            resultMap.put("failed_done_message_ids",failedDoneMessageIdList);
+            resultMap.put("failed_canceled_message_ids",failedCancelMessageIdList);
+            resultMap.put("failed_process_ids",failedProcessIdList);
+            resultMap.put("message","success");
+            resultMap.put("code",0);
+            return resultMap;
         }catch (Exception e) {
-            e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            e.printStackTrace();
             return new YimqWrapResponse(YimqResponseCodeConstants.SYSTEM_ERROR,e.getMessage());
         }
-        return new YimqWrapResponse(YimqResponseCodeConstants.SUCCESS,"success");
     }
 
-    protected boolean clearMessage(List<Integer> messageIdList) {
-        for (Integer messageId:messageIdList) {
-            MessageEntity messageEntity = messageDao.selectMessageByIdForUpdate(messageId);
-            if (null != messageEntity) {
-                if (messageEntity.getStatus() == MessageStatusConstants.DONE
-                        || messageEntity.getStatus() == MessageStatusConstants.CANCELED) {
-                    messageDao.deleteMessageByMessageId(messageId);
-                    subTaskDao.deleteSubTaskByMessageId(messageId);
-                }else{
-                    log.error(" yimqMessage messageClear happened exception , messageId : "+messageId);
-                    throw new RuntimeException(" yimqMessage messageClear happened exception , messageId : "+messageId);
-                }
-            }
+    protected List<BigInteger> clearMessage(List<BigInteger> messageIdList,Integer status) {
+        if (null == messageIdList || 0 == messageIdList.size()) {
+            return new ArrayList<>();
         }
-        return true;
-    }
-
-    protected boolean clearProcess(List<Integer> processIdList) {
-        for (Integer processId:processIdList) {
-            ProcessesEntity processesEntity = processDao.selectProcessByIdForUpdate(processId);
-            if (null != processesEntity) {
-                if (processesEntity.getStatus() == SubTaskStatusConstants.DONE
-                        || processesEntity.getStatus() == SubTaskStatusConstants.CANCELED) {
-                    processDao.deleteProcessById(processId);
-                }else{
-                    log.error(" yimqMessage processClear happened exception , processId : "+processId);
-                   throw new RuntimeException(" yimqMessage processClear happened exception , processId : "+processId);
-                }
-            }
+        //查询满足条件的可清理的message
+        List<MessageEntity> canClearMessageList = messageDao.selectMessageListByIdForUpdate(messageIdList,status);
+        List<BigInteger> canCleatMessageIdList = new ArrayList<>();
+        //获取可清理messageIds
+        for (MessageEntity messageEntity: canClearMessageList) {
+            canCleatMessageIdList.add(messageEntity.getMessage_id());
         }
-        return true;
+        //获取总message_id和canClearMessage_id的差值
+        messageIdList.removeAll(canCleatMessageIdList);
+        if ( 0 != canCleatMessageIdList.size()) {
+            processDao.clearProcedure("message",JSON.toJSONString(canCleatMessageIdList));
+        }
+        return messageIdList;
     }
 
+    protected List<BigInteger> clearProcess(List<BigInteger> processIdList) {
+        if (null == processIdList || 0 == processIdList.size()) {
+            return new ArrayList<>();
+        }
+        List<Integer> processStatusList = new ArrayList<>();
+        //拼接状态查询
+        processStatusList.add(ProcessesStatusConstants.DONE);
+        processStatusList.add(ProcessesStatusConstants.CANCELED);
+        //查询满足清理条件的processes
+        List<ProcessesEntity> processesEntityList = processDao.selectProcessForUpdate(processIdList,processStatusList);
+        if(null == processesEntityList || 0 == processesEntityList.size()) return processIdList;
+        List canClearProcessIdList = new ArrayList<>();
+        for (ProcessesEntity processesEntity: processesEntityList) {
+            canClearProcessIdList.add(processesEntity.getId());
+        }
+        processIdList.removeAll(canClearProcessIdList);
+        if (0 != canClearProcessIdList.size()) {
+            processDao.clearProcedure("process",JSON.toJSONString(canClearProcessIdList));
+        }
+
+        return processIdList;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW,rollbackFor = Exception.class)
     public Object prepare(ProcessesEntity processesEntity,String action) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         String processorClass =  processesEntity.getProcessor();
         String beanNameAndMethodName = transactionClassConfig.getMaps().get(processorClass);
@@ -193,7 +202,7 @@ public abstract class TransactionService {
         }else if (methodTypeCode == YimqConstants.TCC_TYPE) {       //TCC事务类型码
             //如果是TCC类型，需要手动为实体类的processesEntity 赋值
             Method setProcessesEntityMethod = null;
-            setProcessesEntityMethod = transactionService.getClass().getMethod("setProcessId", Integer.class);
+            setProcessesEntityMethod = transactionService.getClass().getMethod("setProcessId", BigInteger.class);
             setProcessesEntityMethod.invoke(transactionService, processesEntity.getId());
             if (action.equals(YimqConstants.TRY)) {
                 methodName = "try" + methodName.substring(0, 1).toUpperCase() + methodName.substring(1);
@@ -236,13 +245,21 @@ public abstract class TransactionService {
             return method.invoke(transactionService, JSONObject.toJavaObject((JSONObject) processesEntity.getData(), paramType));
         }
     }
-    public ProcessesEntity selectSubTaskById (Integer processId){
+    public ProcessesEntity selectSubTaskById (BigInteger processId){
         return processDao.selectProcessById(processId);
+    }
+
+    public ProcessesEntity selectSubTaskByIdForUpdate (BigInteger processId){
+        return processDao.selectProcessByIdForUpdate(processId);
     }
 
     public int updateProcess(ProcessesEntity processesEntity) {
         processesEntity.setUpdateTime(YimqFrameDateUtils.currentFormatDate());
         return processDao.updateProcess(processesEntity);
+    }
+
+    public ProcessesEntity setAndLockProcessModelSkipLocked(BigInteger processId){
+        return processDao.selectProcessByIdForUpdateSkipLocked(processId);
     }
 
 }

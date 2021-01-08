@@ -75,12 +75,13 @@ public class TransactionAccessService {
 
     public ProcessesEntity transferProcesses(JSONObject jsonObject,String action) {
         ProcessesEntity processesEntity = new ProcessesEntity();
-        processesEntity.setId(jsonObject.getInteger("id"));
+        processesEntity.setId(jsonObject.getBigInteger("id"));
         processesEntity.setData(jsonObject.get("data"));
         processesEntity.setProcessor(jsonObject.getString("processor"));
         processesEntity.setType(jsonObject.getString("type"));
-        processesEntity.setMessage_id(jsonObject.getInteger("message_id"));
-        processesEntity.setMessageIds(jsonObject.getJSONArray("message_ids"));
+        processesEntity.setMessage_id(jsonObject.getBigInteger("message_id"));
+        processesEntity.setDoneMessageIds(jsonObject.getJSONArray("done_message_ids"));
+        processesEntity.setCancelMessageIds(jsonObject.getJSONArray("canceled_message_ids"));
         processesEntity.setProcessIds(jsonObject.getJSONArray("process_ids"));
         if (!action.equals(YimqConstants.MESSAGE_CHECK) && !action.equals(YimqConstants.ACTOR_CLEAR)) {
             processesEntity.setTypeCode(YimqCommonUtils.getTransactionTypeCode(processesEntity.getType()));

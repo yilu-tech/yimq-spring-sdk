@@ -6,8 +6,8 @@
 <mapper namespace="com.common.transaction.dao.ProcessDao">
 
     <resultMap id="resultMap" type="com.common.transaction.entity.ProcessesEntity">
-        <id property="id" column="id" jdbcType="INTEGER" />
-        <result property="message_id" column="message_id" jdbcType="INTEGER" />
+        <id property="id" column="id" jdbcType="BIGINT" />
+        <result property="message_id" column="message_id" jdbcType="BIGINT" />
         <result property="typeCode" column="type" jdbcType="INTEGER" />
         <result property="processor" column="processor" jdbcType="VARCHAR" />
         <result property="data" column="data" javaType="com.alibaba.fastjson.JSONObject" jdbcType="VARCHAR" typeHandler="com.common.transaction.utils.JSONHandler" />
@@ -29,7 +29,7 @@
     <update id="insertProcess" parameterType="com.common.transaction.entity.ProcessesEntity">
         insert into yimq_processes
         (<include refid="Insert_Column_List" />)
-        values (#{id,jdbcType=INTEGER},#{message_id,jdbcType=INTEGER},#{typeCode,jdbcType=INTEGER},#{processor,jdbcType=VARCHAR},
+        values (#{id,jdbcType=BIGINT},#{message_id,jdbcType=BIGINT},#{typeCode,jdbcType=INTEGER},#{processor,jdbcType=VARCHAR},
         #{data,jdbcType=VARCHAR,javaType=com.alibaba.fastjson.JSONObject,typeHandler=com.common.transaction.utils.JSONHandler},
         #{tryResult,jdbcType=VARCHAR,javaType=com.alibaba.fastjson.JSONObject,typeHandler=com.common.transaction.utils.JSONHandler},
         #{status,jdbcType=INTEGER},#{createTime,jdbcType=TIMESTAMP}
@@ -54,23 +54,42 @@
                 </if>
             </trim>
         </set>
-        where id = #{id,jdbcType=INTEGER}
+        where id = #{id,jdbcType=BIGINT}
     </update>
 
     <select id="selectProcessById" resultMap="resultMap">
         select <include refid="Base_Column_List" /> from yimq_processes
-        where id = #{id,jdbcType=INTEGER}
+        where id = #{id,jdbcType=BIGINT}
     </select>
 
     <select id="selectProcessByIdForUpdate" resultMap="resultMap">
         select <include refid="Base_Column_List" /> from yimq_processes
-        where id = #{id,jdbcType=INTEGER}
+        where id = #{id,jdbcType=BIGINT}
         for update
     </select>
     
-    <delete id="deleteProcessById" parameterType="java.lang.Integer">
-        delete from yimq_processes where id = #{id,jdbcType=INTEGER}
-    </delete>
+    <select id="selectProcessForUpdate" resultType="com.common.transaction.entity.ProcessesEntity">
+        select id from yimq_processes
+        where 1 =1
+        and id in
+        <foreach collection="processIdList" item="processId" index="index" open="(" close=")" separator=",">
+            #{processId,jdbcType=BIGINT}
+        </foreach>
+        and status in
+        <foreach collection="processStatusList" item="processStatus" index="index" open="(" close=")" separator=",">
+            #{processStatus,jdbcType=INTEGER}
+        </foreach>
+        for update skip locked
+    </select>
 
+    <update id="clearProcedure" statementType="CALLABLE">
+		{call yimq_clear(#{type,jdbcType=VARCHAR,mode=IN},#{canClearProcessId,mode=IN})}
+	</update>
+
+    <select id="selectProcessByIdForUpdateSkipLocked" resultMap="resultMap">
+        select <include refid="Base_Column_List" /> from yimq_processes
+        where id = #{id,jdbcType=BIGINT}
+        for update skip locked
+    </select>
 
 </mapper>

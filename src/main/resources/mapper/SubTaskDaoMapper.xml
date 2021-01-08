@@ -6,9 +6,9 @@
 <mapper namespace="com.common.transaction.dao.SubTaskDao">
 
     <resultMap id="resultMap" type="com.common.transaction.entity.SubTaskEntity">
-        <id property="id" column="id" jdbcType="INTEGER" />
-        <result property="subTaskId" column="subTask_id" jdbcType="INTEGER" />
-        <result property="messageId" column="message_id" jdbcType="INTEGER" />
+        <id property="id" column="id" jdbcType="BIGINT" />
+        <result property="subTaskId" column="subTask_id" jdbcType="BIGINT" />
+        <result property="messageId" column="message_id" jdbcType="BIGINT" />
         <result property="type" column="type" jdbcType="INTEGER" />
         <result property="data" column="data" javaType="java.lang.Object" jdbcType="VARCHAR" typeHandler="com.common.transaction.utils.JSONHandler" />
         <result property="status" column="status" jdbcType="INTEGER" />
@@ -29,28 +29,36 @@
         insert into yimq_subtasks
         (<include refid="Insert_Column_List" />)
         values (
-            #{subTaskId,jdbcType=INTEGER},#{messageId,jdbcType=INTEGER},#{type,jdbcType=INTEGER},
+            #{subTaskId,jdbcType=BIGINT},#{messageId,jdbcType=BIGINT},#{type,jdbcType=INTEGER},
             #{data,jdbcType=VARCHAR,javaType=java.lang.Object,typeHandler=com.common.transaction.utils.JSONHandler},
             #{status,jdbcType=INTEGER},#{createTime,jdbcType=TIMESTAMP},#{updateTime,jdbcType=TIMESTAMP}
         )
         on duplicate key update
-        status=values(status)
+        status = values(status)
     </update>
 
 
     <select id="selectSubTaskByIdForUpdate" resultMap="resultMap" >
         select <include refid="Base_Column_List" /> from yimq_subtasks
-        where id = #{id,jdbcType=INTEGER}
+        where id = #{id,jdbcType=BIGINT}
         for update
     </select>
 
     <select id="selectSubTaskById" resultMap="resultMap" >
         select <include refid="Base_Column_List" /> from yimq_subtasks
-        where id = #{id,jdbcType=INTEGER}
+        where id = #{id,jdbcType=BIGINT}
     </select>
 
-    <delete id="deleteSubTaskByMessageId"  parameterType="java.lang.Integer">
-        delete from yimq_subtasks where message_id = #{messageId,jdbcType=INTEGER}
+    <delete id="deleteSubTaskByMessageId"  parameterType="java.math.BigInteger">
+        delete from yimq_subtasks where message_id = #{messageId,jdbcType=BIGINT}
+    </delete>
+    
+    <delete id="deleteSubTask" parameterType="java.util.List">
+        delete from yimq_subtasks
+        where message_id in
+        <foreach collection="messageIdList" item="messageId" index="index" open="(" close=")" separator=",">
+            #{messageId,jdbcType=BIGINT}
+        </foreach>
     </delete>
 
 </mapper>

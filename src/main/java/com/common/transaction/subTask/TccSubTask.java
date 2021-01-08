@@ -2,7 +2,7 @@ package com.common.transaction.subTask;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.transaction.client.YIMQClient;
-import com.common.transaction.constants.SubTaskStatusConstants;
+import com.common.transaction.constants.ProcessesStatusConstants;
 import com.common.transaction.constants.SubTaskTypeConstants;
 import com.common.transaction.dao.SubTaskDao;
 import com.common.transaction.entity.MessageEntity;
@@ -12,6 +12,7 @@ import com.common.transaction.utils.YimqFrameDateUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,12 +44,12 @@ public class TccSubTask extends ProcessorSubTask {
     @Override
     public List<SubTask> join(MessageEntity messageEntity) {
         JSONObject result = this.client.callServer("subTask",this.getContext(messageEntity));
-        int subTaskId = result.getInteger("id");
+        BigInteger subTaskId = result.getBigInteger("id");
         this.prepareResult = result.getInteger("prepareResult");
         this.subTaskEntity = new SubTaskEntity();
         subTaskEntity.setSubTaskId(subTaskId);
         subTaskEntity.setMessageId(messageEntity.getMessage_id());
-        subTaskEntity.setStatus(SubTaskStatusConstants.PREPARED);
+        subTaskEntity.setStatus(ProcessesStatusConstants.PREPARED);
         subTaskEntity.setType(this.type);
         subTaskEntity.setCreateTime(YimqFrameDateUtils.currentFormatDate());
         subTaskDao.saveOrUpdateSubTask(subTaskEntity);

@@ -1,12 +1,13 @@
 package com.common.transaction.service;
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.transaction.constants.SubTaskStatusConstants;
+import com.common.transaction.constants.ProcessesStatusConstants;
 import com.common.transaction.constants.YimqResponseCodeConstants;
 import com.common.transaction.constants.YimqResponseMessageConstants;
 import com.common.transaction.entity.ProcessesEntity;
 import com.common.transaction.http.YimqWrapResponse;
 import org.apache.log4j.Logger;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionDefinition;
@@ -16,7 +17,7 @@ import javax.annotation.Resource;
 
 
 /**
- * create by gaotiedun ON 2020/3/30 20:52
+ * create by gtd ON 2020/3/30 20:52
  *
  * @version v2.0
  * Description :
@@ -45,16 +46,24 @@ public class EcTransactionService extends TransactionService {
         //获取Process
         ProcessesEntity subTaskEntity = this.selectSubTaskById(processesEntity.getId());
         //对子任务状态进行判断
-        if (null != subTaskEntity && subTaskEntity.getStatus().intValue() == SubTaskStatusConstants.DONE) {
+        if (null != subTaskEntity && subTaskEntity.getStatus() == ProcessesStatusConstants.DONE) {
             log.info(" this tcc transaction is done ");
             return new YimqWrapResponse(YimqResponseCodeConstants.SUCCESS, YimqResponseMessageConstants.SUCCESS);
         }
         //如果不存在，则创建
         if (null == subTaskEntity) {
             synchronized (EcTransactionService.class) {
-                if (null == subTaskEntity) {
-                    processesEntity.setStatus(SubTaskStatusConstants.DOING);
+                processesEntity.setStatus(ProcessesStatusConstants.DOING);
+                try {
                     this.insertProcessRecord(processesEntity);
+                }catch (Exception e) {
+                    if (e instanceof DuplicateKeyException) {
+                        log.info("保存 process 时，该process已被保存，processId:"+processesEntity.getId());
+                        return new YimqWrapResponse(YimqResponseCodeConstants.SUCCESS, YimqResponseMessageConstants.SUCCESS);
+                    }else{
+                        e.printStackTrace();
+                        throw new RuntimeException("保存process时发生未知异常");
+                    }
                 }
             }
         }
@@ -72,7 +81,7 @@ public class EcTransactionService extends TransactionService {
                 dataSourceTransactionManager.rollback(transactionStatus);
                 return result;
             }
-            processesEntity.setStatus(SubTaskStatusConstants.DONE);
+            processesEntity.setStatus(ProcessesStatusConstants.DONE);
             saveProcessRecord(processesEntity);
             dataSourceTransactionManager.commit(transactionStatus);
         } catch (Exception e) {

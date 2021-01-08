@@ -3,6 +3,7 @@ package com.common.transaction.entity;
 import com.alibaba.fastjson.JSONObject;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 
 /**
  * create by gaotiedun ON 2020/3/31 13:55
@@ -14,8 +15,8 @@ import java.io.Serializable;
 public class MessageEntity implements Serializable {
     private static final long serialVersionUID = -7371349121571143118L;
 
-    private Integer id;
-    private Integer message_id;
+    private BigInteger id;
+    private BigInteger message_id;
     private String topic;
     private Integer type;
     private JSONObject data;
@@ -25,11 +26,11 @@ public class MessageEntity implements Serializable {
     private String createdAt;
     private String updatedAt;
 
-    public Integer getId() {
+    public BigInteger getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(BigInteger id) {
         this.id = id;
     }
 
@@ -73,11 +74,12 @@ public class MessageEntity implements Serializable {
         this.updatedAt = updatedAt;
     }
 
-    public Integer getMessage_id() {
+
+    public BigInteger getMessage_id() {
         return message_id;
     }
 
-    public void setMessage_id(Integer message_id) {
+    public void setMessage_id(BigInteger message_id) {
         this.message_id = message_id;
     }
 

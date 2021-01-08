@@ -4,7 +4,7 @@ server:
     context-path: /
 
 project:
-  version: V1.002
+  version: V1.004
 #http
 http:
   encoding:
@@ -23,14 +23,12 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/world?useUnicode=true&serverTimezone=UTC
     username: root
     password: root
+
+
 mybatis:
   mapper-locations: classpath:/mapper/transaction/*.xml
   type-aliases-package: com.common.transaction.entity
   configuration:
-    cache-enabled: true
-    lazy-loading-enabled: true
-    use-column-label: true
-    use-generated-keys: true
     default-statement-timeout: 250000
     log-prefix: mybatis
 
@@ -42,4 +40,4 @@ router:
 
 yimq:
   service:
-    uri: http://172.31.1.112:7379
+    uri: http://yimq-svc:7379

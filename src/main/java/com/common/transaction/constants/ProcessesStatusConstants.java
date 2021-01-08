@@ -7,7 +7,7 @@ package com.common.transaction.constants;
  * Description :
  * Updated Date      by
  */
-public class SubTaskStatusConstants {
+public class ProcessesStatusConstants {
 
     public static final int PREPARING = 10;     //准备中状态
 

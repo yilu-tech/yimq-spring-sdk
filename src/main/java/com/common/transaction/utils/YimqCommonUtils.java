@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.transaction.config.TransactionClassConfig;
 import com.common.transaction.constants.YimqConstants;
-import com.common.transaction.constants.SubTaskStatusConstants;
+import com.common.transaction.constants.ProcessesStatusConstants;
 import com.common.transaction.dao.ProcessDao;
 import com.common.transaction.entity.ProcessesEntity;
 import com.common.transaction.exception.MyTransactionException;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,12 +52,12 @@ public class YimqCommonUtils {
         transactionTypeCodeMap.put(YimqConstants.EC, YimqConstants.EC_TYPE);
         transactionTypeCodeMap.put(YimqConstants.BCST, YimqConstants.BCST_TYPE);
         //
-        statusMap.put(SubTaskStatusConstants.PREPARING,"PREPARING");
-        statusMap.put(SubTaskStatusConstants.PREPARED,"PREPARED");
-        statusMap.put(SubTaskStatusConstants.DOING,"DOING");
-        statusMap.put(SubTaskStatusConstants.DONE,"DONE");
-        statusMap.put(SubTaskStatusConstants.CANCELLING,"CANCELLING");
-        statusMap.put(SubTaskStatusConstants.CANCELED,"CANCELED");
+        statusMap.put(ProcessesStatusConstants.PREPARING,"PREPARING");
+        statusMap.put(ProcessesStatusConstants.PREPARED,"PREPARED");
+        statusMap.put(ProcessesStatusConstants.DOING,"DOING");
+        statusMap.put(ProcessesStatusConstants.DONE,"DONE");
+        statusMap.put(ProcessesStatusConstants.CANCELLING,"CANCELLING");
+        statusMap.put(ProcessesStatusConstants.CANCELED,"CANCELED");
 
         actionMap.put("create","/message/create");
         actionMap.put("subTask","/message/subTask");
@@ -127,7 +128,7 @@ public class YimqCommonUtils {
      * @param processId
      * @return
      */
-    public JSONObject getProcessTryResultById(Integer processId) {
+    public JSONObject getProcessTryResultById(BigInteger processId) {
         ProcessesEntity processesEntity = processDao.selectProcessById(processId);
         if (null == processesEntity){      //初步参数非空校验未通过
             throw new RuntimeException("查询processes数据异常,processId:"+processId);
@@ -140,7 +141,7 @@ public class YimqCommonUtils {
      * @param processId
      * @return
      */
-    public JSONObject getProcessDataById(Integer processId) {
+    public JSONObject getProcessDataById(BigInteger processId) {
         ProcessesEntity processesEntity = processDao.selectProcessById(processId);
         if (null == processesEntity){      //初步参数非空校验未通过
             throw new RuntimeException("查询processes数据异常,processId:"+processId);

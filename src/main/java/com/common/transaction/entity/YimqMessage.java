@@ -1,7 +1,6 @@
 package com.common.transaction.entity;
 
 import com.common.transaction.client.YIMQClient;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
